@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Receptionist Demo — Novae Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F6F1; --surface:#FFFFFF; --ink:#1B2B27; --ink-soft:#4B5D58;
+    --teal:#256D63; --teal-dark:#173F39; --gold:#C68B3C; --line:#DDE3DE;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans', sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:920px; margin:0 auto; padding:0 24px; }
+  header{ padding:32px 0 0; }
+  .brand{ display:flex; align-items:center; gap:10px; font-size:15px; color:var(--teal-dark); font-weight:600; }
+  .brand-mark{ width:28px;height:28px; border-radius:8px; background:var(--teal); display:inline-flex; align-items:center; justify-content:center; }
+  .brand-mark svg{ width:15px;height:15px; }
+  .hero{ padding:96px 0 64px; }
+  .eyebrow{ color:var(--gold); font-weight:600; font-size:14px; margin-bottom:18px; }
+  h1{ font-family:'Fraunces', serif; font-weight:500; font-size:clamp(34px, 5vw, 54px); line-height:1.12; margin:0 0 24px; max-width:14ch; color:var(--teal-dark); }
+  .lede{ font-size:18px; line-height:1.6; color:var(--ink-soft); max-width:54ch; margin:0 0 36px; }
+  .cta-row{ display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+  button.cta{ background:var(--teal-dark); color:#fff; border:none; padding:16px 28px; font-size:16px; font-weight:500; font-family:'IBM Plex Sans', sans-serif; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:10px; transition:background 0.15s ease; }
+  button.cta:hover{ background:var(--teal); }
+  button.cta:disabled{ opacity:0.6; cursor:default; }
+  button.cta:focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
+  button.cta svg{ width:18px;height:18px; }
+  .cta-note{ font-size:14px; color:var(--ink-soft); }
+  .clinic-meta{ display:flex; flex-wrap:wrap; gap:10px 22px; font-size:13.5px; color:var(--ink-soft); padding-top:28px; }
+  .divider{ height:1px; background:var(--line); }
+  .how{ padding:64px 0; }
+  .how h2{ font-family:'Fraunces', serif; font-weight:500; font-size:26px; margin:0 0 32px; color:var(--teal-dark); }
+  .steps{ display:grid; grid-template-columns:repeat(3, 1fr); gap:32px; }
+  .step{ border-top:2px solid var(--teal); padding-top:16px; }
+  .step h3{ font-size:16px; font-weight:600; margin:0 0 8px; }
+  .step p{ font-size:14.5px; line-height:1.55; color:var(--ink-soft); margin:0; }
+  footer{ padding:48px 0 64px; border-top:1px solid var(--line); margin-top:16px; font-size:13.5px; color:var(--ink-soft); }
+  .no-agent{ padding:14px 18px; background:#FDF3E7; border:1px solid var(--gold); border-radius:8px; font-size:14px; color:var(--ink); margin-bottom:24px; max-width:54ch; }
+
+  /* Call status panel (replaces the old iframe modal) */
+  .call-panel{
+    margin-top:28px; padding:22px 24px; background:var(--surface);
+    border:1px solid var(--line); border-radius:12px; max-width:420px;
+    display:none; align-items:center; gap:16px;
+  }
+  .call-panel.open{ display:flex; }
+  .pulse{
+    width:14px;height:14px;border-radius:50%; background:var(--teal); flex-shrink:0;
+    animation:pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{ opacity:1; transform:scale(1);} 50%{ opacity:0.4; transform:scale(0.7);} }
+  .call-panel-text{ flex:1; font-size:14.5px; }
+  .call-panel-text strong{ display:block; font-size:15px; margin-bottom:2px; }
+  button.end-call{
+    background:none; border:1px solid var(--line); color:var(--ink-soft);
+    padding:8px 14px; border-radius:6px; font-size:13.5px; cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  button.end-call:hover{ border-color:var(--ink-soft); color:var(--ink); }
+
+  @media (max-width:640px){ .steps{ grid-template-columns:1fr; } .hero{ padding:64px 0 48px; } }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="brand">
+    <span class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3c-3 0-5 2-5 5 0 2 1 3 1 5 0 3 1 8 2 8s1-4 2-6c1 2 1 6 2 6s2-5 2-8c0-2 1-3 1-5 0-3-2-5-5-5z" stroke="white" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    </span>
+    <span id="brandName">Novae Studio</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">AI Receptionist — Live Demo</div>
+    <h1 id="headline">Your front desk, answering every call.</h1>
+    <p class="lede" id="lede">
+      This is a working preview of an AI receptionist built for <span id="clinicNameInline">your clinic</span>.
+      It speaks with patients in Hindi, books appointments, answers questions about treatments and hours,
+      and knows how to prioritise a dental emergency — day or night. Press the button below and talk to it.
+    </p>
+
+    <div id="noAgentNotice" class="no-agent" style="display:none;">
+      This link isn't connected to an agent yet. Add <code>?agentId=</code> and clinic details to the URL
+      (see the setup notes in the project files).
+    </div>
+
+    <div class="cta-row">
+      <button class="cta" id="openCall">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 12l5 2v4a2 2 0 0 1-2 2C10.5 20 4 13.5 4 5a2 2 0 0 1 2-2z" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span id="ctaLabel">Talk to the AI Receptionist</span>
+      </button>
+      <span class="cta-note">Needs microphone access — works best in Chrome or Safari. The agent speaks Hindi.</span>
+    </div>
+
+    <div class="call-panel" id="callPanel">
+      <div class="pulse"></div>
+      <div class="call-panel-text">
+        <strong>Connected</strong>
+        <span id="callStatusText">Talking to the AI receptionist…</span>
+      </div>
+      <button class="end-call" id="endCall">End call</button>
+    </div>
+
+    <div class="clinic-meta" id="clinicMeta"></div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="how">
+    <h2>What to try</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>Book an appointment</h3>
+        <p>Ask for a check-up or root canal consult, in Hindi or English. It'll ask for your name, a preferred time, and a callback number.</p>
+      </div>
+      <div class="step">
+        <h3>Ask a question</h3>
+        <p>Try asking about hours, the clinic's address, or what treatments are offered.</p>
+      </div>
+      <div class="step">
+        <h3>Simulate an emergency</h3>
+        <p>Say you have severe tooth pain or a knocked-out tooth. Notice how the tone and pace change.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <span id="footerText">Built by Novae Studio. This is a preview environment — no real appointments are recorded.</span>
+</footer>
+
+<script type="module">
+  import { RetellWebClient } from "https://esm.sh/retell-client-js-sdk@2";
+
+  // ---- Personalization via URL parameters ----
+  // Example link for a new prospect:
+  // yoursite.vercel.app/?clinic=Bright+Smile+Dental&city=Kothrud,+Pune&phone=98765+43210
+  //   &hours=Open+9am%E2%80%937pm&agentId=agent_XXXXXXXX
+  //
+  // Supported params: clinic, city, phone, hours, agentId, address, doctor
+
+  const params = new URLSearchParams(window.location.search);
+  const clinic = params.get('clinic') || 'your clinic';
+  const city = params.get('city');
+  const phone = params.get('phone');
+  const hours = params.get('hours');
+  const address = params.get('address');
+  const doctor = params.get('doctor');
+  const agentId = params.get('agentId');
+
+  document.title = clinic + ' — AI Receptionist Demo';
+  document.getElementById('clinicNameInline').textContent = clinic;
+  document.getElementById('headline').textContent = clinic + ' — every call, answered.';
+  document.getElementById('footerText').textContent = 'Built by Novae Studio for ' + clinic + '. This is a preview environment — no real appointments are recorded.';
+
+  const meta = [];
+  if (city) meta.push('📍 ' + city);
+  if (phone) meta.push('📞 ' + phone);
+  if (hours) meta.push('🕐 ' + hours);
+  document.getElementById('clinicMeta').innerHTML = meta.map(m => '<span>' + m + '</span>').join('');
+
+  const openBtn = document.getElementById('openCall');
+  const endBtn = document.getElementById('endCall');
+  const callPanel = document.getElementById('callPanel');
+  const statusText = document.getElementById('callStatusText');
+  const notice = document.getElementById('noAgentNotice');
+  const ctaLabel = document.getElementById('ctaLabel');
+
+  if (!agentId) notice.style.display = 'block';
+
+  const client = new RetellWebClient();
+
+  client.on('call_started', () => {
+    callPanel.classList.add('open');
+    statusText.textContent = 'Talking to the AI receptionist…';
+  });
+  client.on('call_ended', () => {
+    callPanel.classList.remove('open');
+    openBtn.disabled = false;
+    ctaLabel.textContent = 'Talk to the AI Receptionist';
+  });
+  client.on('agent_start_talking', () => { statusText.textContent = 'AI receptionist is speaking…'; });
+  client.on('agent_stop_talking', () => { statusText.textContent = 'Listening…'; });
+  client.on('error', (err) => {
+    console.error('Call error:', err);
+    statusText.textContent = 'Something went wrong. Please try again.';
+    openBtn.disabled = false;
+  });
+
+  openBtn.addEventListener('click', async () => {
+    if (!agentId) { notice.style.display = 'block'; return; }
+
+    openBtn.disabled = true;
+    ctaLabel.textContent = 'Connecting…';
+
+    try {
+      const res = await fetch('/api/create-web-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentId: agentId,
+          dynamicVariables: {
+            clinic_name: clinic,
+            city: city || '',
+            phone_number: phone || '',
+            hours: hours || '',
+            address: address || '',
+            doctor_name: doctor || '',
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to start call');
+
+      await client.startCall({ accessToken: data.access_token });
+    } catch (err) {
+      console.error(err);
+      statusText.textContent = 'Could not connect. Please try again.';
+      openBtn.disabled = false;
+      ctaLabel.textContent = 'Talk to the AI Receptionist';
+    }
+  });
+
+  endBtn.addEventListener('click', () => {
+    client.stopCall();
+  });
+</script>
+
+</body>
+</html>
